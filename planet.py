@@ -1,102 +1,114 @@
-
-
+import pygame
 import random
-import numpy as np
 
-## lets consider planet a grid and assume this a grid of 10X10
-PLANET_SIZE = 10 ### assume the size of the planet grid mean(10X10)
+# Constants
+WIDTH, HEIGHT = 800, 800
+CELL_SIZE = 20
+GRID_WIDTH = WIDTH // CELL_SIZE
+GRID_HEIGHT = HEIGHT // CELL_SIZE
+FPS = 5  # Slower for better observation of equilibrium
 
-INITIAL_POPULATION = 10 ### let the initial population of living organisms
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
 
-MAX_LIFESPAN = 30 ### let the maximum lifespan of a living organism
+# Organism properties
+LIFESPAN = 50
+REPRODUCTION_AGE = 10
 
-STRENGTH_RANGE = (1, 10) ## lets consider strength between 1 to 10
-
-RESOURCE_REGENERATION_RATE = 0.1  ## lets assume resources are regenerated woth some rate
+# Initialize Pygame
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Life Simulation")
+clock = pygame.time.Clock()
 
 class Organism:
-    def __init__(self):
-        self.strength = random.randint(*STRENGTH_RANGE)
-        self.lifespan = MAX_LIFESPAN
-        self.position = (random.randint(0, PLANET_SIZE-1), random.randint(0, PLANET_SIZE-1))
-
-    def move(self):
-        x = random.randint(-1, 1)
-        y = random.randint(-1, 1)
-        #print(x,y)
-        #print(self.position[0])
-        new_x = (self.position[0] + x) % PLANET_SIZE
-        new_y = (self.position[1] + y) % PLANET_SIZE
-        #print(new_x,new_y)
-        self.position = (new_x, new_y)
-
-    def interact(self, other):
-        if isinstance(other,Organism) and self.strength > other.strength:
-            other.lifespan = 0
-        elif isinstance(other,Organism) and self.strength < other.strength:
-            self.lifespan = 0
-
-    def reproduce(self):
-        if self.lifespan > 0 and random.random() < 0.1:
-            offspring = Organism()
-            offspring.position = self.position
-            return offspring
-        return None
+    def __init__(self, x, y, strength):
+        self.x = x
+        self.y = y
+        self.strength = strength
+        self.age = 0
+        self.interaction_count = 0  # Count interactions for elimination logic
     
-    def update(self):
-        self.lifespan -= 1
+    def move(self):
+        dx, dy = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)])
+        self.x = (self.x + dx) % GRID_WIDTH
+        self.y = (self.y + dy) % GRID_HEIGHT
+    
+    def age_and_maybe_die(self):
+        self.age += 1
+        return self.age > LIFESPAN
+    
+    def reproduce(self):
+        return self.age > REPRODUCTION_AGE and random.random() < 0.5  # 50% chance to reproduce
+    
+    def interact(self, other):
+        if self.interaction_count == 1:  # Second interaction
+            if self.strength > other.strength:
+                return True  # This organism eliminates the other
+        self.interaction_count += 1
+        return False  # No elimination
 
+def create_initial_population():
+    return [Organism(random.randint(0, GRID_WIDTH - 1), random.randint(0, GRID_HEIGHT - 1), random.randint(1, 10)) for _ in range(50)]
 
-class Planet:
-    def __init__(self):
-        self.grid = np.zeros((PLANET_SIZE, PLANET_SIZE), dtype=object)
-        self.resources = np.ones((PLANET_SIZE, PLANET_SIZE))
+def draw_grid():
+    for x in range(0, WIDTH, CELL_SIZE):
+        pygame.draw.line(screen, BLACK, (x, 0), (x, HEIGHT))
+    for y in range(0, HEIGHT, CELL_SIZE):
+        pygame.draw.line(screen, BLACK, (0, y), (WIDTH, y))
 
-    def add_organism(self, organism):
-        self.grid[organism.position] = organism
-        print('organism added at',organism.position)
+def draw_population(population):
+    for organism in population:
+        pygame.draw.rect(screen, GREEN, (organism.x * CELL_SIZE, organism.y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
+def main():
+    population = create_initial_population()
+    running = True
 
-    def remove_organism(self, organism):
-        print('organism removed from',organism.position)
-        self.grid[organism.position] = None
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
+        screen.fill(WHITE)
+        draw_grid()
+        draw_population(population)
 
-    def update_resources(self):
-        self.resources += RESOURCE_REGENERATION_RATE
-        self.resources[self.resources > 1] = 1
+        new_population = []
+        for organism in population:
+            organism.move()
+            if organism.age_and_maybe_die():
+                continue
+            if organism.reproduce():
+                new_population.append(Organism(organism.x, organism.y, random.randint(1, 10)))
+            new_population.append(organism)
 
+        # Resolve interactions
+        positions = {}
+        for organism in new_population:
+            pos = (organism.x, organism.y)
+            if pos in positions:
+                other = positions[pos]
+                if organism.interact(other):
+                    continue  # Current organism eliminates the other
+                if other.interact(organism):
+                    continue  # Other organism eliminates the current
+            positions[pos] = organism
+        
+        population = list(positions.values())
+        
+        # Regenerate organisms if population is low
+        if len(population) < 50:
+            for _ in range(5):
+                x, y = random.randint(0, GRID_WIDTH - 1), random.randint(0, GRID_HEIGHT - 1)
+                population.append(Organism(x, y, random.randint(1, 10)))
 
-    def simulate_step(self):
-        new_organisms = []
-        for i in range(PLANET_SIZE):
-            for j in range(PLANET_SIZE):
-                organism = self.grid[i, j]
-                if isinstance(organism, Organism):
-                    organism.move()
-                    other_organism = self.grid[organism.position]
-                    organism.interact(other_organism)
-                    offspring = organism.reproduce()
-                    if offspring is not None:
-                        new_organisms.append(offspring)
-                    organism.update()
-                    if organism.lifespan <= 0:
-                        self.remove_organism(organism)
-        for organism in new_organisms:
-            self.add_organism(organism)
-        self.update_resources()
+        pygame.display.flip()
+        clock.tick(FPS)
 
+    pygame.quit()
 
-planet = Planet()
-for _ in range(INITIAL_POPULATION):
-    organism = Organism()
-    planet.add_organism(organism)
-
-
-while True:
-    planet.simulate_step()
-    if len(planet.grid[planet.grid != None]) == INITIAL_POPULATION:
-        ##print(len(planet.grid[planet.grid != None]))
-        break
-
-print("Simulation reached equilibrium!")
+if __name__ == "__main__":
+    main()
