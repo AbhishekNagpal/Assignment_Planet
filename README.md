@@ -14,7 +14,7 @@ Laws for the simulation:
 3. Living organisms can only reproduce if they have enough resources and are above a certain age(Age considered is 10).
 4. Living organisms move randomly around the planet.
 5. Living organisms consume resources when they move and interact.
-6. The simulation ends when the planet reaches an equilibrium state.
+
 
 Approach to Problem.
 Initialize the planet with a fixed land area
