@@ -1,5 +1,23 @@
 # Assignment_Planet
 
+Problem statement
+Create a simulation program for life on a new planet, which eventually should reach an equilibrium. 
+Following are the guidelines.
+
+Make as many assumptions as you want and document them all.
+The simulation should represent life on a planet.
+The planet should be completely empty during start.
+In equilibrium, the life should be at peace and sustainable.
+Define maximum of 10 laws for simulation.
+Following two laws are given.
+ - Stronger eliminates the weak in second interaction.
+ - A living organism eventually dies.
+Write the program in any language you prefer.
+
+Please note that there is no right or wrong answer. I want you to be honest, and please don’t discuss with 
+anybody else. It’s not only a test of your programming skills but also a test of your thinking, attitude and
+ general understanding of things around us. Use your imagination and creativity, and create a lasting impression
+ 
 ASSUMPTIONS
 1. There Exists some Initial Population in the planet to proceed life(Panspermia Theory). In this we taken 50.
 2. Living organisms can move around the planet and interact with each other.
