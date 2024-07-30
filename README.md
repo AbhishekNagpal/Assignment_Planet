@@ -1,8 +1,7 @@
 # Assignment_Planet
 
 ASSUMPTIONS
-1. There Exists some Initial Population in the planet to proceed life(Panspermia Theory). In this we taken 10.
-1. The planet has a limited amount of resources (food, water, shelter) that are evenly distributed , also with some regeneration rate.
+1. There Exists some Initial Population in the planet to proceed life(Panspermia Theory). In this we taken 50.
 2. Living organisms can move around the planet and interact with each other.
 3. Living organisms can reproduce and create offspring.
 4. Living organisms have a certain lifespan and die of old age.
